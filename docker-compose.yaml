@@ -1,0 +1,56 @@
+services:
+  pds-router:
+    image: pds-router
+    container_name: pds-router
+    privileged: true
+    env_file: ${PDS_TOPO}
+    environment:
+      PDS_SERVER: ${PDS_NET1_SERVER}
+    networks:
+      pds-net1:
+        ipv4_address: ${PDS_NET1_ROUTER}
+      pds-net2:
+        ipv4_address: ${PDS_NET2_ROUTER}
+
+  pds-server:
+    image: pds-server
+    container_name: pds-server
+    depends_on:
+      - pds-router
+    privileged: true
+    environment:
+      PDS_GATEWAY: ${PDS_NET1_ROUTER}
+      PDS_TOPO:    ${PDS_TOPO}
+    volumes:
+      - ./results/:/root/results
+    networks:
+      pds-net1:
+        ipv4_address: ${PDS_NET1_SERVER}
+
+  pds-client:
+    image: pds-client
+    container_name: pds-client
+    depends_on: 
+      - pds-router
+    privileged: true
+    environment:
+      PDS_GATEWAY: ${PDS_NET2_ROUTER}
+    networks:
+      pds-net2:
+        ipv4_address: ${PDS_NET2_CLIENT}
+
+networks:
+  pds-net1:
+    name: pds-net1
+    driver: bridge
+    #enable_ipv6: false
+    ipam:
+      config:
+        - subnet: ${PDS_NET1_SUBNET}
+  pds-net2:
+    name: pds-net2
+    driver: bridge
+    #enable_ipv6: false
+    ipam:
+      config:
+        - subnet: ${PDS_NET2_SUBNET}

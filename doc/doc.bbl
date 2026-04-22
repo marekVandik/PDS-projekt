@@ -1,0 +1,20 @@
+\makeatletter
+\makeatother
+\begin{thebibliography}{1}
+
+\bibitem{rfc5681}
+{\sc\bgroup}Blanton{\egroup}, E.; {\sc\bgroup}Paxson{\egroup}, D.~V.
+  a~{\sc\bgroup}Allman{\egroup}, M.
+\newblock {\em {TCP Congestion Control}} RFC 5681.
+\newblock RFC Editor, září 2009.
+\newblock Dostupn{\'{e}} z: ~{\small\url{https://doi.org/10.17487/RFC5681}}.
+
+\bibitem{rfc9438}
+{\sc\bgroup}Xu{\egroup}, L.; {\sc\bgroup}Ha{\egroup}, S.;
+  {\sc\bgroup}Rhee{\egroup}, I.; {\sc\bgroup}Goel{\egroup}, V.
+  a~{\sc\bgroup}Eggert{\egroup}, L.
+\newblock {\em {CUBIC for Fast and Long-Distance Networks}} RFC 9438.
+\newblock RFC Editor, srpen 2023.
+\newblock Dostupn{\'{e}} z: ~{\small\url{https://doi.org/10.17487/RFC9438}}.
+
+\end{thebibliography}

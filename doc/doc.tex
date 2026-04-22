@@ -1,0 +1,89 @@
+% Autor: Marek Vandík, 13. 4. 2026
+
+\documentclass[a4paper,11pt]{article}
+
+% preambule
+
+\usepackage[czech]{babel}
+\usepackage[left=2cm,text={17cm,24cm},top=3cm]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{times}
+\usepackage{multirow}
+%\usepackage[czech,linesnumbered,longend,noline,ruled]{algorithm2e}
+\usepackage{graphics}
+\usepackage{picture}
+\usepackage{pdflscape}
+
+% bibtex + babel - nazev citaci
+\addto\captionsczech{\renewcommand{\refname}{Literatura}}
+
+% titulni strana
+
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+	\Huge{\textsc{Vysoké učení technické v~Brně}} \\
+	\huge{\textsc{Fakulta informačních technologií}} \\
+	\vspace{\stretch{0.382}}
+		\LARGE{Přenos dat, počítačové sítě a~protokoly\,--\,projekt} \\
+		\Huge{Analýza transportních protokolů a~algoritmů pro~řízení zahlcení} \\
+	\vspace{\stretch{0.618}}
+	\Large{\today \hfill Marek Vandík}
+\end{center}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% TODO navrhované optimalizace
+\section{Úvod}
+Projekt se zabývá analýzou chování algoritmů řízení zahlcení při~různých síťových podmínkách pro~transportní
+protokol~TCP a~dále tyto~přístupy porovnává s~protokolem~QUIC.
+
+Pro~účely projektu bylo vytvořeno simulační prostředí na~bázi
+kontejnerizace, vizte podkapitolu~\ref{subsec-containers}. % TODO github
+V~kapitole~\ref{sec-transport} naleznete vysvětlení, jak~jsou dané protokoly a~jejich přístupy k~řízení zahlcení specifikovány.
+Kapitola~\ref{sec-experiment} uvádí, jaká topologie sítě byla zvolena, jak~experiment probíhal včetně popisu zvolené metodiky, a~s~jakými sítěmi se pracovalo.
+Výsledky jsou uvedeny v kapitole~\ref{sec-result} včetně vizualizací klouzavého okna odesilatele, odezvy, dosažené rychlosti,
+a~porovnání algoritmů pro~dané případy použití. Ve~stejné kapitole je~taktéž porovnán protokol~TCP s~protokolem~QUIC.
+
+\section{Zkoumané transportní protokoly} \label{sec-transport}
+\subsection{Transport s TCP}
+\subsection{Transport s QUIC}
+\subsection{Algoritmy řízení zahlcení}
+\subsubsection{Reno}
+Bleh blah \cite{rfc5681}.
+\subsubsection{Cubic}
+Blih bleh \cite{rfc9438}.
+\subsubsection{BBR}
+
+\section{Experiment} \label{sec-experiment}
+\subsection{Prostředí simulace} \label{subsec-containers}
+\subsection{Topologie sítě a její parametry}
+\subsubsection{Bezdrátová síť s velkou ztrátovostí (Wi-Fi)}
+\subsubsection{Satelitní síť s vyšší odezvou (Starlink)}
+\subsubsection{Síť s příliš velkou frontou na směrovači (Bufferbloat)}
+\subsection{Metodika měření}
+
+\section{Výsledky a zhodnocení} \label{sec-result}
+\subsection{Vizualizace zahlcení}
+\subsubsection{Bezdrátová síť s velkou ztrátovostí (Wi-Fi)}
+\subsubsection{Satelitní síť s vyšší odezvou (Starlink)}
+\subsubsection{Síť s příliš velkou frontou na směrovači (Bufferbloat)}
+\subsection{Porovnání algoritmů řízení zahlcení}
+\subsection{TCP vs. QUIC}
+
+\section{Závěr}
+Blih bleh blah
+
+% bibtex - styl Pysny/czplain z sablony zaverecnych praci
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{Literatura}
+\begin{flushleft}
+	\bibliographystyle{czplain}
+	\bibliography{citace}
+\end{flushleft}
+
+\end{document}

@@ -1,0 +1,36 @@
+diff --git a/src/event/quic/ngx_event_quic_streams.c b/src/event/quic/ngx_event_quic_streams.c
+index 18fffea..99adf36 100644
+--- a/src/event/quic/ngx_event_quic_streams.c
++++ b/src/event/quic/ngx_event_quic_streams.c
+@@ -8,6 +8,7 @@
+ #include <ngx_core.h>
+ #include <ngx_event.h>
+ #include <ngx_event_quic_connection.h>
++#include <time.h>
+ 
+ 
+ #define NGX_QUIC_STREAM_GONE     (void *) -1
+@@ -1593,6 +1594,9 @@ ngx_quic_handle_stream_ack(ngx_connection_t *c, ngx_quic_frame_t *f)
+     uint64_t                acked;
+     ngx_quic_stream_t      *qs;
+     ngx_quic_connection_t  *qc;
++    ngx_quic_congestion_t  *cg_probe;
++    struct timespec         ts_probe;
++    uint64_t                ns_probe;
+ 
+     qc = ngx_quic_get_connection(c);
+ 
+@@ -1654,6 +1658,13 @@ ngx_quic_handle_stream_ack(ngx_connection_t *c, ngx_quic_frame_t *f)
+     if (qs->connection == NULL) {
+         ngx_quic_close_stream(qs);
+     }
++
++    cg_probe = &qc->congestion;
++    clock_gettime(CLOCK_MONOTONIC, &ts_probe);
++    ns_probe = ts_probe.tv_sec * 1000000000ULL + ts_probe.tv_nsec;
++    ngx_log_error(NGX_LOG_INFO, c->log, 0,
++                  "quic_probe_start|time:%uL,cwnd:%uz,sid:%uL,recv_last:%uL,recv_offset:%uL,sent:%uL,acked:%uL|quic_probe_end",
++                  ns_probe, cg_probe->window, qs->id, qs->recv_last, qs->recv_offset, qs->sent, qs->acked);
+ }
+ 
+ 
