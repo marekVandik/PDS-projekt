@@ -6,6 +6,7 @@ services:
     env_file: ${PDS_TOPO}
     environment:
       PDS_SERVER: ${PDS_NET1_SERVER}
+      PDS_TO_SERVER: ${PDS_NET1_ROUTER}
     networks:
       pds-net1:
         ipv4_address: ${PDS_NET1_ROUTER}

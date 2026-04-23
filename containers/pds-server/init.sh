@@ -10,8 +10,8 @@ echo "creating data for download"
 #dd bs=1k count=10k  if=/dev/urandom of=/var/www/data
 #dd bs=1k count=20k  if=/dev/urandom of=/var/www/data
 #dd bs=1k count=50k  if=/dev/urandom of=/var/www/data
-#dd bs=1k count=100k if=/dev/urandom of=/var/www/data
-dd bs=1k count=200k if=/dev/urandom of=/var/www/data
+dd bs=1k count=100k if=/dev/urandom of=/var/www/data
+#dd bs=1k count=200k if=/dev/urandom of=/var/www/data
 #dd bs=1k count=500k if=/dev/urandom of=/var/www/data
 #dd bs=1k count=1M   if=/dev/urandom of=/var/www/data
 #dd bs=1k count=2M   if=/dev/urandom of=/var/www/data
