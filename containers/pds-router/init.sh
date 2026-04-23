@@ -7,10 +7,10 @@ sysctl -w net.ipv4.ip_forward=1
 
 . /root/pds-router/tc-conf.sh $PDS_TOPO
 
-## disabling offloading
-#ethtool -K eth0 tso off gso off gro off
-#ethtool -K eth1 tso off gso off gro off
-#echo "offloading turned off"
+# disabling offloading
+ethtool -K eth0 tso off gso off gro off
+ethtool -K eth1 tso off gso off gro off
+echo "offloading turned off"
 
 echo "$PDS_SERVER pds-server" >> /etc/hosts
 echo "starting dnsmasq"
