@@ -18,7 +18,7 @@ tc qdisc add dev "$client_dev" parent 1:10 handle 10: netem delay $PDS_TOPO_DELA
 
 tc qdisc add dev "$server_dev" root handle 1: htb default 10
 tc class add dev "$server_dev" parent 1: classid 1:10 htb rate $PDS_TOPO_RATE_S cburst $PDS_TOPO_BURST_S
-tc qdisc add dev "$server_dev" parent 1: handle 10: netem delay $PDS_TOPO_DELAY_S loss $PDS_TOPO_LOSS_S duplicate $PDS_TOPO_DUPL_S limit $PDS_TOPO_LIMIT_S
+tc qdisc add dev "$server_dev" parent 1:10 handle 10: netem delay $PDS_TOPO_DELAY_S loss $PDS_TOPO_LOSS_S duplicate $PDS_TOPO_DUPL_S limit $PDS_TOPO_LIMIT_S
 #tc qdisc add dev "$server_dev" parent 10: pfifo limit $PDS_TOPO_LIMIT_S
 
 echo "simulation set to $PDS_TOPO_NAME"
