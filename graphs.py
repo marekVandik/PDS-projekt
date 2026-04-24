@@ -113,7 +113,7 @@ def main():
     plot_tcp('BBR-geo-topo')
     plot_tcp('RENO-geo-topo')
     plot_tcp('CUBIC-geo-topo')
-    #plot_quic('QUIC-geo-topo')
+    plot_quic('QUIC-geo-topo')
 
     plot_tcp('BBR-bloat-topo')
     plot_tcp('RENO-bloat-topo')

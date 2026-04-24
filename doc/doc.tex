@@ -13,6 +13,8 @@
 \usepackage{graphics}
 \usepackage{picture}
 \usepackage{pdflscape}
+\usepackage{subcaption}
+\usepackage{placeins}
 
 % bibtex + babel - nazev citaci
 \addto\captionsczech{\renewcommand{\refname}{Literatura}}
@@ -45,34 +47,722 @@ Pro~účely projektu bylo vytvořeno simulační prostředí na~bázi
 kontejnerizace, vizte podkapitolu~\ref{subsec-containers}. % TODO github
 V~kapitole~\ref{sec-transport} naleznete vysvětlení, jak~jsou dané protokoly a~jejich přístupy k~řízení zahlcení specifikovány.
 Kapitola~\ref{sec-experiment} uvádí, jaká topologie sítě byla zvolena, jak~experiment probíhal včetně popisu zvolené metodiky, a~s~jakými sítěmi se pracovalo.
-Výsledky jsou uvedeny v kapitole~\ref{sec-result} včetně vizualizací klouzavého okna odesilatele, odezvy, dosažené rychlosti,
+Výsledky jsou uvedeny v kapitole~\ref{sec-result} včetně vizualizací klouzavého okna odesilatele, dosažené rychlosti (resp.~goodput),
 a~porovnání algoritmů pro~dané případy použití. Ve~stejné kapitole je~taktéž porovnán protokol~TCP s~protokolem~QUIC.
+Řešení je také dostupné na githubu \href{https://github.com/marekVandik/PDS-projekt.git}{zde}.
 
 \section{Zkoumané transportní protokoly} \label{sec-transport}
 \subsection{Transport s TCP}
 \subsection{Transport s QUIC}
 \subsection{Algoritmy řízení zahlcení}
 \subsubsection{Reno}
-Bleh blah \cite{rfc5681}.
 \subsubsection{Cubic}
-Blih bleh \cite{rfc9438}.
 \subsubsection{BBR}
+Bohužel jsem velmi podcenil náročnost dopisování výsledků a vkládání obrázků do LaTeXu a nestihl jsem tuto část vypracovat.
+\cite{rfc5681}
+\cite{rfc9438}
 
 \section{Experiment} \label{sec-experiment}
-\subsection{Prostředí simulace} \label{subsec-containers}
 \subsection{Topologie sítě a její parametry}
+Pro měření chování transportních protokolů a~jejich CC algoritmů v~nepřívětivých síťových podmínkách byla navržena minimální topologie,
+která~umožňuje kontrolovaně odsimulovat požadované podmínky. Klient \verb|pds-client| a server \verb|pds-server| generují provoz, který~je manipulován na~směrovači
+\verb|pds-router| tak, aby~odpovídal simulované síti svým zpožděním, ztrátovostí a~hloubkou bufferu. Parametry sítě lze měnit v~příslušném \verb|*-topo.env| souboru.
+Parametry topologie lze měnit v~soboru \verb|net.env|.
+\begin{figure}[h]
+	\begin{center}
+		\scalebox{2.0}{
+			\includegraphics{topo.eps}
+		}
+	\end{center}
+\end{figure}
+
+\subsubsection{Baseline síť}
+Pro účely vyhodnocení chování algoritmů je zavedena síť s~rozumnými paremetry, aby~bylo možné vizualizovat normální chování algoritmů bez~přičinění nepříznivých podmínek.
+Tato~síť má následující parametry:
+\begin{table}[h]
+\begin{center}
+\catcode`-=12
+\begin{tabular}{|c|cccc|} \hline
+	& \textbf{zpoždění} & \textbf{propustnost} & \textbf{hloubka bufferu} & \textbf{ztrátovost} \\ \hline
+    ke klientovi & 10ms & 40mbps & 100 & 0\% \\
+    k serveru    & 10ms & 40mbps & 100 & 0\% \\ \hline
+\end{tabular}
+\caption{Baseline paramery sítě}
+\end{center}
+\end{table}
+
 \subsubsection{Bezdrátová síť s velkou ztrátovostí (Wi-Fi)}
-\subsubsection{Satelitní síť s vyšší odezvou (Starlink)}
+Problém, na~který je možné narazit poměrně často, je zarušená síť Wi-Fi. U~této sítě je simulována vysoká ztrátovost paketů.
+Pro~jednoduchost mají uplink i~downlink stejné parametry. Výsledná ztrátovost celého oběhu paketů je potom o~něco vyšší než~na~jednotlivých kanálech: $ 1 - (1 - 0.03)*(1 - 0.03) = 0.0591 = 5.91\% $.
+\begin{table}[h]
+\begin{center}
+\catcode`-=12
+\begin{tabular}{|c|cccc|} \hline
+	& \textbf{zpoždění} & \textbf{propustnost} & \textbf{hloubka bufferu} & \textbf{ztrátovost} \\ \hline
+    ke klientovi & 3ms & 400mbps & 220 & 3\% \\
+    k serveru    & 3ms & 400mbps & 220 & 3\% \\ \hline
+\end{tabular}
+\caption{Wi-Fi parametry sítě}
+\end{center}
+\end{table}
+
+\subsubsection{Satelitní síť s vyšší odezvou (geostacionární satelity)}
+Pro tuto kategorii byly zvoleny raději geostacionární satelity místo Starlinku, protože~Starlink má~daleko nižší než~požadované RTT.
+Parametry se mezi~poskytovateli značně liší, proto~byly uměle navrženy vlastní, kde~typicky uplink je výrazně pomalejší než~downlink.
+\begin{table}[h]
+\begin{center}
+\catcode`-=12
+\begin{tabular}{|c|cccc|} \hline
+	& \textbf{zpoždění} & \textbf{propustnost} & \textbf{hloubka bufferu} & \textbf{ztrátovost} \\ \hline
+	ke klientovi & 200ms +- 15ms & 80mbps & 3000 & 0.5\% \\
+	k serveru    & 200ms +- 15ms & 20mbps & 750 & 0.5\% \\ \hline
+\end{tabular}
+\caption{Parametry geostacionární satelitní sítě}
+\end{center}
+\end{table}
+
 \subsubsection{Síť s příliš velkou frontou na směrovači (Bufferbloat)}
+Simulace Bufferbloat Trap vyžaduje příliš dlouhou frontu na směrovači. V~předchozích situacích byly sítě nastaveny tak, aby~se do~front vešlo
+množství aktuálně přepravovaných paketů, jež~umožňuje limit propustnosti, a~jejichž~počet závisí na~simulovaném zpoždění.
+Nastavení bylo provedeno dle~vzorečku $ throughput * rtt / 1500 $ s~drobnou rezervou. Zde~je záměrně tento~limit vysoce přesažen.
+\begin{table}[h]
+\begin{center}
+\catcode`-=12
+\begin{tabular}{|c|cccc|} \hline
+	& \textbf{zpoždění} & \textbf{propustnost} & \textbf{hloubka bufferu} & \textbf{ztrátovost} \\ \hline
+	ke klientovi & 15ms & 50mbps & 10000 & 0\% \\
+	k serveru    & 15ms & 50mbps & 10000 & 0\% \\ \hline
+\end{tabular}
+\caption{Parametry Bufferbloat Trap sítě}
+\end{center}
+\end{table}
+
+\subsection{Prostředí simulace} \label{subsec-containers}
+Pro~provedení měření byla zvolena kontejnerizace nástrojem \textbf{Docker} na~operačním systému Linux kvůli snadné replikovatelnosti na~jiných zařízeních.
+Pro~jednotlivé uzly sítě, vizte~výše, byly vytvořeny kontejnery \textbf{na~bázi Alpine~Linux~3.23} se~stejným názvem jako~uzly, jejichž funkcionalitu implemetují.
+
+\textbf{Směrovací uzel} \verb|pds-router| byl implementován pomocí nástroje \verb|dnsmasq|, pro~zajištění nalezení serveru podle~jeho~doménového jména.
+Simulace síťových podmínek byla zajištěna utilitou \verb|tc| s~využitím \verb|tc-htb|, pro~simulaci maximální propustnosti, a~\verb|tc-netem|, pro~simulaci nejen~ztráty a~zpoždění paketů,
+ale~i~pro simulaci délky bufferu. Offloading byl vypnut nástrojem \verb|ethtool|.
+Kontejner se~\textbf{serverem} \verb|pds-server| měl k~dispozici především http~server Nginx, jenž~byl poupraven pro~získávání informací o~vnitřním stavu transportního protokolu~\textit{QUIC}.
+Důležitou součástí tohoto~kontejneru byl také~eBPF program \verb|tracing|, který~byl pro~tento kontejner navržen, aby~zajišťoval sběr dat TCP spojení.
+Kontejner \verb|pds-client| zajišťující funkcionalitu \textbf{klienta} obsahoval utilitu \verb|curl|. Klient i~server si zaběhu nastaví \verb|pds-router| jako~svou~výchozí bránu.
+
+Pro~spuštění simulace je potřeba mít jádro operačního systému zkompilováno
+\textbf{s~podporou eBPF a~TCP~BBRv2}. Dále je potřeba mít nainstalován Python a~umožnit běh kontejnerů v~privilegovaném režimu,
+případně lze v~souboru \verb|docker-compose.yaml| použít capabilities jako alternativu privilegovaného režimu (\textit{CAP\_NET\_ADMIN}).
+
 \subsection{Metodika měření}
+Měření bylo prováděno skriptem \verb|run.sh| potom, co~byly vytvořeny kontejnery skriptem \verb|setup.sh|.
+Simulace byly provedeny \textbf{po~dvou bězích na~každé kombinaci CC algoritmu a~síťového prostředí}, přičemž~každý~běh simulace byl spuštěn na~znovu vytvořené topologii,
+aby~byly co~nejvíce potlačeny okolní vlivy z~předešlých simulací. Data byla vizualizována skriptem \verb|graphs.py|, jenž~je volán z~\verb|run.sh|.
+
+Generování provozu bylo zajištěno http~serverem Nginx~1.28.3 v~kombinaci s~utilitou \verb|curl|. Na~serveru byla k~dispozici náhodně vygenerovaná data o~velikosti 100~MB.
+Data byla pro~následnou analýzu \textbf{sesbírána pomocí eBPF programu}, který~se na~serveru přichytil k~\verb|kprobe/tcp_recv_established|, odkud logoval následující parametry \textit{TCP}~spojení:
+\begin{itemize}
+	\item{\verb|time|, jako \textbf{časovou značku} v ns,}
+	\item{\verb|snd_addr|, jako adresu odesilatele,}
+	\item{\verb|rcv_addr|, jako adresu příjemce,}
+	\item{\verb|snd_port|, jako port odesilatele,}
+	\item{\verb|rcv_port|, jako port příjemce,}
+	\item{\verb|cwnd|, jako \textbf{velikost klouzavého okna},}
+	\item{\verb|una|, jako \textbf{nejnižší nepotvrzený byte} datového proudu.}
+\end{itemize}
+
+Pro~generování provozu protokolu \textit{QUIC} byla použita stejná kombinace nástrojů pouze s~vynucením využití HTTP/3 spojení. Sběr dat byl však zajištěn odlišně.
+Protože~protokol QUIC není implementován v~jádře ale~pouze~samotným http serverem, musela být vytvořena \textbf{modifikace Nginx~serveru} taková, aby~server logoval potřebné informace.
+Logování informací bylo vneseno do~funkce \verb|ngx_quic_handle_stream_ack()|, která~zajišťuje potvrzování konkrétního proudu dat v~daném spojení.
+Z~této funkce bylo zjištěno:
+\begin{itemize}
+	\item{\verb|time|, jako \textbf{časová značka} v ns,}
+	\item{\verb|cwnd|, jako \textbf{velikost klouzavého okna},}
+	\item{\verb|sid|, jako identifikátor proudu ve~spojení,}
+	\item{\verb|sent|, jako \textbf{počet odeslaných bytů proudu},}
+	\item{\verb|acked|, jako \textbf{nejvyšší potvrzený byte proudu},}
+	\item{a další informace (např. \verb|recv_offset|), které nakonec nebyly potřeba.}
+\end{itemize}
 
 \section{Výsledky a zhodnocení} \label{sec-result}
 \subsection{Vizualizace zahlcení}
+\subsubsection{Baseline síť}
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/BBR-baseline-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/BBR-baseline-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{BBR}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/BBR-baseline-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/BBR-baseline-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{BBR}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/RENO-baseline-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/RENO-baseline-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{RENO}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/RENO-baseline-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/RENO-baseline-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{RENO}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/CUBIC-baseline-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/CUBIC-baseline-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{CUBIC}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/CUBIC-baseline-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/CUBIC-baseline-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{CUBIC}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/QUIC-baseline-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/QUIC-baseline-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{QUIC}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/QUIC-baseline-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/QUIC-baseline-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{QUIC}
+\label{fig:image2}
+\end{figure}
+
+\FloatBarrier
 \subsubsection{Bezdrátová síť s velkou ztrátovostí (Wi-Fi)}
-\subsubsection{Satelitní síť s vyšší odezvou (Starlink)}
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/BBR-wifi-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/BBR-wifi-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{BBR}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/BBR-wifi-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/BBR-wifi-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{BBR}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/RENO-wifi-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/RENO-wifi-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{RENO}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/RENO-wifi-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/RENO-wifi-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{RENO}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/CUBIC-wifi-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/CUBIC-wifi-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{CUBIC}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/CUBIC-wifi-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/CUBIC-wifi-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{CUBIC}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/QUIC-wifi-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/QUIC-wifi-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{QUIC}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/QUIC-wifi-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/QUIC-wifi-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{QUIC}
+\label{fig:image2}
+\end{figure}
+
+\FloatBarrier
+\subsubsection{Satelitní síť s vyšší odezvou (geostacionární satelity)}
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/BBR-geo-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/BBR-geo-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{BBR}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/BBR-geo-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/BBR-geo-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{BBR}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/RENO-geo-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/RENO-geo-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{RENO}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/RENO-geo-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/RENO-geo-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{RENO}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/CUBIC-geo-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/CUBIC-geo-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{CUBIC}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/CUBIC-geo-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/CUBIC-geo-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{CUBIC}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/QUIC-geo-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/QUIC-geo-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{QUIC}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/QUIC-geo-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/QUIC-geo-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{QUIC}
+\label{fig:image2}
+\end{figure}
+
+\FloatBarrier
 \subsubsection{Síť s příliš velkou frontou na směrovači (Bufferbloat)}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/BBR-bloat-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/BBR-bloat-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{BBR}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/BBR-bloat-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/BBR-bloat-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{BBR}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/RENO-bloat-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/RENO-bloat-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{RENO}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/RENO-bloat-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/RENO-bloat-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{RENO}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/CUBIC-bloat-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/CUBIC-bloat-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{CUBIC}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/CUBIC-bloat-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/CUBIC-bloat-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{CUBIC}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/QUIC-bloat-topo-cwnd.eps}}
+\caption{CWND běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/QUIC-bloat-topo-cwnd.eps}}
+\caption{CWND běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{QUIC}
+\label{fig:image2}
+\end{figure}
+
+\begin{figure}[h]
+
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results/QUIC-bloat-topo-rate.eps}}
+\caption{Goodput běh 1}
+\label{fig:subim1}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\scalebox{0.5}{\includegraphics{../results2/QUIC-bloat-topo-rate.eps}}
+\caption{Goodput běh 2}
+\label{fig:subim2}
+\end{subfigure}
+
+\caption{QUIC}
+\label{fig:image2}
+\end{figure}
+
+\FloatBarrier
 \subsection{Porovnání algoritmů řízení zahlcení}
+Ve scénáři \textbf{baseline}, jsou si všechna měření dosti podobná, BBR a~QUIC dosahují zlomkově méně než ostatní algoritmy, ale~skutečně ten rozdíl je minimální.
+Zákmyty goodputu paketů výrazně nad~hranice sítě jsou nejspíše způsobeny náhodným opožděním paketu a~následným kumulativním potvrzením více paketů - okamžitý goodput bude velmi vysoký,
+protože~se potvrdí několik paketů současně. Toto~je nejspíše způsobeno limitací přesnosti simulace nástrojem \verb|tc|, resp.~rozlišením hodin jádra.
+Vidíme očekávané průběhy CWND, BBR zkouší, zda se dá odesílat rychleji (zákmyty nahoru), měří RTT (hluboké zákmyty dolů), RENO a CUBIC následují klasicky jejich fáze, dokud nedojde k saturaci linky, kde~
+se pak CWND sníží. BBR, RENO i CUBIC zaznamenávají minimum ztracených paketů, QUIC je trochu pilovitější, protože se v tomto případě zotavuje rychleji.
+
+Ve scénáři \textbf{Wi-Fi} s vysokou ztrátovostí to již vypadá zajímavěji. BBR ještě relativně zvládá danou ztrátovost, leč mezi běhy se stejným seedem je rozdíl (nejspíš systémový šum, algoritmus bude
+zřejmě na hranici svých možností) s dobrou propustnosti (goodputem). Ostatní algoritmy prakticky nemají šanci dosáhnout maximálního goodputu. Toto se děje nejspíše kvůli tomu, že
+BBR neredukuje rychlost odesílání hned na základě detekce ztracení paketu tak, že se zvětší prodleva, ale tak, že do toho vstupuje i RTT. Ve výsledku je BBR také agresivnější při
+znovu získání cwnd, pokouší se rychleji získat vyšší throughput (vysoké zákmyty nahoru) a při skutečné chybě opatrněji zmenšuje cwnd (utlumená údolí, nejprve velké potom drobné skoky dolů).
+
+Ve scénáři \textbf{Geo} s vysokým RTT je opět nejlepší BBR. Opět se zde projevuje jistá variance běhů, ačkoliv náhodnost chyb je seedována stejným seedem (šum systému, limity simulace).
+V běhu 2 jde vidět, že BBR podobně jako u Wi-Fi reaguje opatrněji než všechny ostatní algoritmy, které okamžitě zmenší svoje cwnd na velmi nízkou hodnotu, protože bere v potaz i RTT.
+Goodput BBR naznačuje dosti odesílání po dávkách, toto může být způsobeno kumulativním potvrzováním paketů, protože se uvolní z bufferu větší dávka paketů zároveň.
+U RENO, CUBIC i QUIC lze videt, že náhodnost je opravdu seedována, a že tedy pravděpodobně i tak malá ztrátovost má vliv na tyto algoritmy a znemožní jim odesilat data natolik, že po 5 minutách dostanou timeout.
+
+Ve scénáři \textbf{Bufferbloat} je situace trochu podobná jako baseline. Algoritmy využívají téměř celou šíři pásma s drobnými zákmyty způsobenými limitací simulace. Rozdíl oproti baseline
+tkví v tom, že cwnd zde má možnost neomezeně růst - zvyšuje se rychlost odesílání paketů, které pak čekají ve frontě na směrovači. Podstatný rozdíl by byl v RTT, pokud by směrovač
+nerozlišoval jednotlivé toky - ostatní toky by stály ve frontě a narůstalo by jim vysoce RTT.
+
 \subsection{TCP vs. QUIC}
+Porovnání TCP a QUIC nelze dělat přímo. TCP je L4 protokol, velmi dobře implementován v~jádře operačních systémů, kdežto~QUIC je vždy až~v~uživatelské aplikaci.
+Navíc nad~QUIC protokolem běží šifrování, což~taktéž~značně změní výkonnost.
+Přesto, QUIC je ze~zkoumaných algorimů rozhodně ten nejcitlivější na~nenadálé změny a~ani vysoké rtt nezvládá nejlépe. S~TCP si byli podobni pouze v~baseline a~bufferblaot testu.
+Ve většině všech scénářů vychází nejlépe algoritmus BBR.
 
 \section{Závěr}
 Blih bleh blah
