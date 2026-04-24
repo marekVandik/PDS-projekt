@@ -105,6 +105,11 @@ def main():
     plot_tcp('CUBIC-wifi-topo')
     plot_quic('QUIC-wifi-topo')
 
+    plot_tcp('BBR-baseline-topo')
+    plot_tcp('RENO-baseline-topo')
+    plot_tcp('CUBIC-baseline-topo')
+    plot_quic('QUIC-baseline-topo')
+
     plot_tcp('BBR-geo-topo')
     plot_tcp('RENO-geo-topo')
     plot_tcp('CUBIC-geo-topo')
