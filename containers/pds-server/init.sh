@@ -62,5 +62,8 @@ case "$PDS_CC_TYPE" in
 		;;
 esac
 
-echo "measurement done, quitting"
+echo "measurement done, turning off nginx"
+nginx -s stop
+sleep 1
+echo "quitting"
 # TODO tcpdump pcap
