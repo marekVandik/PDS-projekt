@@ -10,6 +10,7 @@ def plot_cwnd(df, title, filename):
     plt.figure()
     ax = sns.lineplot(data=df, x='time_s', y='cwnd')
     ax.set_title(title)
+    ax.set_xlabel('time')
     fig = ax.get_figure()
     fig.savefig('./results/' + filename + '-cwnd.svg')
     plt.close(fig)
@@ -103,6 +104,16 @@ def main():
     plot_tcp('RENO-wifi-topo')
     plot_tcp('CUBIC-wifi-topo')
     plot_quic('QUIC-wifi-topo')
+
+    plot_tcp('BBR-geo-topo')
+    plot_tcp('RENO-geo-topo')
+    plot_tcp('CUBIC-geo-topo')
+    #plot_quic('QUIC-geo-topo')
+
+    plot_tcp('BBR-bloat-topo')
+    plot_tcp('RENO-bloat-topo')
+    plot_tcp('CUBIC-bloat-topo')
+    plot_quic('QUIC-bloat-topo')
 
 if __name__ == "__main__":
     main()
