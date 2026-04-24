@@ -27,30 +27,40 @@ TOPO_LEN=${#PDS_TOPO}
 TOPO_LEN=`expr $TOPO_LEN - 4`
 TOPO=${PDS_TOPO:0:$TOPO_LEN}
 
-sysctl -w net.ipv4.tcp_congestion_control=bbr
-/tmp/tracing > "/root/results/BBR-$TOPO" &
-TRACING_PID=`echo "$!"`
-echo "BBR" > /var/www/status
-. /root/pds-server/status_wait.sh "CURL_OK"
-kill "$TRACING_PID"
+case "$PDS_CC_TYPE" in
+	BBR)
+		sysctl -w net.ipv4.tcp_congestion_control=bbr
+		/tmp/tracing > "/root/results/BBR-$TOPO" &
+		TRACING_PID=`echo "$!"`
+		echo "BBR" > /var/www/status
+		. /root/pds-server/status_wait.sh "CURL_OK"
+		kill "$TRACING_PID"
+		;;
 
-sysctl -w net.ipv4.tcp_congestion_control=reno
-/tmp/tracing > "/root/results/RENO-$TOPO" &
-TRACING_PID=`echo "$!"`
-echo "RENO" > /var/www/status
-. /root/pds-server/status_wait.sh "CURL_OK"
-kill "$TRACING_PID"
+	RENO)
+		sysctl -w net.ipv4.tcp_congestion_control=reno
+		/tmp/tracing > "/root/results/RENO-$TOPO" &
+		TRACING_PID=`echo "$!"`
+		echo "RENO" > /var/www/status
+		. /root/pds-server/status_wait.sh "CURL_OK"
+		kill "$TRACING_PID"
+		;;
 
-sysctl -w net.ipv4.tcp_congestion_control=cubic
-/tmp/tracing > "/root/results/CUBIC-$TOPO" &
-TRACING_PID=`echo "$!"`
-echo "CUBIC" > /var/www/status
-. /root/pds-server/status_wait.sh "CURL_OK"
-kill "$TRACING_PID"
+	CUBIC)
+		sysctl -w net.ipv4.tcp_congestion_control=cubic
+		/tmp/tracing > "/root/results/CUBIC-$TOPO" &
+		TRACING_PID=`echo "$!"`
+		echo "CUBIC" > /var/www/status
+		. /root/pds-server/status_wait.sh "CURL_OK"
+		kill "$TRACING_PID"
+		;;
 
-echo "QUIC" > /var/www/status
-. /root/pds-server/status_wait.sh "CURL_OK"
-cp "/var/log/nginx/quic.log" "/root/results/QUIC-$TOPO"
+	QUIC)
+		echo "QUIC" > /var/www/status
+		. /root/pds-server/status_wait.sh "CURL_OK"
+		cp "/var/log/nginx/quic.log" "/root/results/QUIC-$TOPO"
+		;;
+esac
 
-echo "all measurements done, quitting"
+echo "measurement done, quitting"
 # TODO tcpdump pcap

@@ -22,6 +22,7 @@ services:
     environment:
       PDS_GATEWAY: ${PDS_NET1_ROUTER}
       PDS_TOPO:    ${PDS_TOPO}
+      PDS_CC_TYPE: ${PDS_CC_TYPE}
     volumes:
       - ./results/:/root/results
     networks:
@@ -36,6 +37,7 @@ services:
     privileged: true
     environment:
       PDS_GATEWAY: ${PDS_NET2_ROUTER}
+      PDS_CC_TYPE: ${PDS_CC_TYPE}
     networks:
       pds-net2:
         ipv4_address: ${PDS_NET2_CLIENT}
